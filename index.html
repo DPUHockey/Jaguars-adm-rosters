@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+<meta name="apple-mobile-web-app-title" content="Jaguar ADM"/>
+<meta name="theme-color" content="#111111"/>
+<title>Jaguar ADM — Game Day Rosters</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --blk: #111; --gold: #FFD700; --gdark: #B8860B; --gmid: #FFC200;
+  --glight: #FFF8DC; --surf: #1a1a1a; --surf2: #2a2a2a; --wht: #fff;
+}
+html, body { height: 100%; font-family: sans-serif; background: var(--blk); color: var(--wht); }
+.app { background: var(--blk); min-height: 100vh; padding-bottom: 40px; }
+.hdr { border-bottom: 3px solid var(--gmid); padding: 14px 20px 10px; text-align: center; }
+.hdr h1 { font-size: 19px; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; font-weight: 500; }
+.hdr p { font-size: 11px; color: #777; margin-top: 3px; }
+.tabs { display: flex; background: var(--surf); border-bottom: 2px solid var(--gdark); }
+.tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-size: 13px; color: #777; border-bottom: 3px solid transparent; }
+.tab.on { color: var(--gold); border-bottom-color: var(--gold); background: rgba(255,215,0,0.06); }
+.body { padding: 14px 16px; max-width: 900px; margin: 0 auto; }
+.lbl { font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--gmid); font-weight: 500; margin-bottom: 7px; }
+.form { background: var(--surf); border: 1px solid #333; border-radius: 8px; padding: 11px; margin-bottom: 11px; }
+.fgrid { display: grid; grid-template-columns: 1fr 1fr 58px auto; gap: 7px; align-items: end; }
+@media(max-width:500px){ .fgrid { grid-template-columns: 1fr 1fr; } .fgrid .fg:nth-child(3){ grid-column:1; } .fgrid .addbtn{ grid-column:2; } }
+.fg { display: flex; flex-direction: column; gap: 3px; }
+.fl { font-size: 10px; letter-spacing: 0.7px; text-transform: uppercase; color: #666; }
+input.fi { background: var(--surf2); border: 1px solid #444; border-radius: 6px; padding: 7px 9px; color: var(--wht); font-size: 13px; outline: none; width: 100%; }
+input.fi:focus { border-color: var(--gmid); }
+input.fi::placeholder { color: #555; }
+input.ni { text-align: center; color: var(--gmid) !important; font-weight: 500; }
+button.addbtn { background: var(--gmid); color: #111; border: none; border-radius: 6px; padding: 7px 14px; font-size: 13px; font-weight: 500; cursor: pointer; height: 35px; }
+button.addbtn:hover { background: var(--gold); }
+.zone { border-radius: 8px; border: 1px solid #333; overflow: hidden; margin-bottom: 13px; }
+.mzone-hdr { display: grid; grid-template-columns: 22px 38px 1fr 1fr 30px; gap: 5px; padding: 6px 10px; background: var(--blk); border-bottom: 1px solid var(--gdark); }
+.mzone-hdr span { font-size: 10px; letter-spacing: 0.7px; text-transform: uppercase; color: var(--gdark); }
+.droplist { min-height: 56px; padding: 4px; background: var(--surf); }
+.droplist.accepting { background: rgba(255,215,0,0.07); outline: 2px dashed var(--gmid); border-radius: 0 0 7px 7px; }
+.prow { display: grid; align-items: center; cursor: grab; user-select: none; touch-action: none; border-radius: 4px; }
+.prow.main-style { grid-template-columns: 22px 38px 1fr 1fr 30px; gap: 5px; padding: 7px 10px; border-bottom: 1px solid #222; background: var(--surf); }
+.prow.main-style:last-child { border-bottom: none; }
+.prow.bk-style { grid-template-columns: 22px 38px 1fr 30px; gap: 5px; padding: 6px 9px; margin-bottom: 3px; background: #1f1f1f; border: 1px solid #333; }
+.prow.gd-style { grid-template-columns: 22px 38px 1fr 30px; gap: 5px; padding: 6px 9px; margin-bottom: 3px; background: #3a2d00; border: 1px solid var(--gdark); }
+.prow.dragging { opacity: 0.25; }
+.grip { color: #555; font-size: 13px; letter-spacing: -2px; }
+.gd-style .grip { color: var(--gdark); }
+.pnum { font-size: 13px; font-weight: 500; text-align: center; }
+.main-style .pnum, .bk-style .pnum { color: var(--gmid); }
+.gd-style .pnum { color: var(--gdark); }
+.pf { font-size: 13px; color: var(--wht); }
+.pl { font-size: 13px; color: #ccc; }
+.sname { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bk-style .sname { color: #ddd; }
+.gd-style .sname { color: var(--glight); }
+button.del { background: none; border: none; cursor: pointer; font-size: 13px; padding: 2px 4px; border-radius: 3px; color: #444; }
+button.del:hover { color: #e24b4a; background: rgba(226,75,74,0.12); }
+.empty { padding: 14px; text-align: center; color: #444; font-size: 11px; font-style: italic; }
+.div { height: 1px; background: linear-gradient(to right,transparent,var(--gdark),transparent); margin: 11px 0; }
+.sgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+@media(max-width:480px){ .sgrid { grid-template-columns: 1fr; } }
+.steam { background: var(--surf); border-radius: 8px; overflow: hidden; border: 1px solid #333; }
+.shdr { padding: 8px 12px; text-align: center; font-size: 12px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; }
+.shdr.bk { background: #0d0d0d; color: var(--gold); border-bottom: 2px solid var(--gdark); }
+.shdr.gd { background: var(--gold); color: #111; border-bottom: 2px solid var(--gdark); }
+.badge { display: inline-block; font-size: 10px; font-weight: 500; border-radius: 10px; padding: 1px 7px; margin-left: 5px; }
+.bk .badge { background: var(--gdark); color: #111; }
+.gd .badge { background: rgba(0,0,0,0.15); color: #333; }
+.zone-hdr { display: grid; gap: 5px; padding: 6px 10px; border-bottom: 1px solid var(--gdark); }
+.zone-hdr.bk-hdr { grid-template-columns: 22px 38px 1fr 30px; background: #0d0d0d; }
+.zone-hdr.gd-hdr { grid-template-columns: 22px 38px 1fr 30px; background: #3a2d00; }
+.zone-hdr span { font-size: 10px; letter-spacing: 0.7px; text-transform: uppercase; color: var(--gdark); }
+.ghost { position: fixed; pointer-events: none; z-index: 9999; opacity: 0.8; box-shadow: 0 6px 24px rgba(0,0,0,0.8); border-radius: 5px; }
+.hint { font-size: 10px; color: #555; text-align: center; margin-bottom: 7px; font-style: italic; }
+.zone-label { font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--gmid); font-weight: 500; margin-bottom: 7px; display: flex; align-items: center; gap: 7px; }
+.mbadge { background: var(--gdark); color: #111; font-size: 10px; font-weight: 500; border-radius: 10px; padding: 1px 7px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hdr">
+    <h1>Jaguar ADM — Game Day Rosters</h1>
+    <p>Hockey Program &nbsp;•&nbsp; Drag players between rosters freely</p>
+  </div>
+  <div class="tabs">
+    <div class="tab on" onclick="switchTeam('al',this)">Alligators</div>
+    <div class="tab" onclick="switchTeam('ea',this)">Eagles</div>
+  </div>
+  <div class="body" id="body"></div>
+</div>
+<script>
+const S = {
+  al: { main:[], black:[], gold:[] },
+  ea: { main:[], black:[], gold:[] }
+};
+let team = 'al';
+let dP=null,dFrom=null,dEl=null,ghost=null,ox=0,oy=0;
+
+function uid(){ return '_'+Math.random().toString(36).slice(2,8); }
+function fullName(p){ return [p.first,p.last].filter(Boolean).join(' ')||'—'; }
+function gv(id){ return (document.getElementById(id)||{}).value?.trim()||''; }
+function sv(id,v){ const e=document.getElementById(id); if(e)e.value=v; }
+
+function switchTeam(t,el){
+  team=t;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on');
+  render();
+}
+
+function addPlayer(){
+  const f=gv('inp-f'),l=gv('inp-l'),n=gv('inp-n');
+  if(!f&&!l){ document.getElementById('inp-f').focus(); return; }
+  S[team].main.push({id:uid(),first:f,last:l,num:n});
+  sv('inp-f',''); sv('inp-l',''); sv('inp-n','');
+  document.getElementById('inp-f').focus();
+  render();
+}
+
+function removePlayer(id){
+  const t=S[team];
+  ['main','black','gold'].forEach(k=>{ t[k]=t[k].filter(p=>p.id!==id); });
+  render();
+}
+
+function movePlayer(player,dest){
+  const t=S[team];
+  ['main','black','gold'].forEach(k=>{ t[k]=t[k].filter(p=>p.id!==player.id); });
+  t[dest].push(player);
+}
+
+function startDrag(e,player,from){
+  if(e.target.closest('button')) return;
+  dP=player; dFrom=from; dEl=e.currentTarget;
+  const r=dEl.getBoundingClientRect();
+  ox=e.clientX-r.left; oy=e.clientY-r.top;
+  ghost=dEl.cloneNode(true);
+  ghost.className='ghost';
+  ghost.style.width=r.width+'px';
+  ghost.style.left=r.left+'px';
+  ghost.style.top=r.top+'px';
+  document.body.appendChild(ghost);
+  dEl.classList.add('dragging');
+  document.addEventListener('pointermove',onMove);
+  document.addEventListener('pointerup',onUp);
+  e.preventDefault();
+}
+
+function onMove(e){
+  if(!ghost) return;
+  ghost.style.left=(e.clientX-ox)+'px';
+  ghost.style.top=(e.clientY-oy)+'px';
+  clearHi();
+  ghost.style.display='none';
+  const tgt=document.elementFromPoint(e.clientX,e.clientY);
+  ghost.style.display='';
+  const dl=tgt&&tgt.closest('.droplist');
+  if(dl) dl.classList.add('accepting');
+}
+
+function onUp(e){
+  document.removeEventListener('pointermove',onMove);
+  document.removeEventListener('pointerup',onUp);
+  if(ghost){ghost.remove();ghost=null;}
+  if(dEl){dEl.classList.remove('dragging');dEl=null;}
+  clearHi();
+  if(!dP) return;
+  const saved=dP; dP=null;
+  const tgt=document.elementFromPoint(e.clientX,e.clientY);
+  const dl=tgt&&tgt.closest('.droplist');
+  if(dl){ const dest=dl.dataset.zone; if(dest&&dest!==dFrom) movePlayer(saved,dest); }
+  dFrom=null;
+  render();
+}
+
+function clearHi(){
+  document.querySelectorAll('.accepting').forEach(el=>el.classList.remove('accepting'));
+}
+
+function render(){
+  const t=S[team];
+  const tc=team==='al'?'Alligators':'Eagles';
+  document.getElementById('body').innerHTML=`
+    <div class="zone-label" style="margin-top:8px">${tc} — Add Player</div>
+    <div class="form">
+      <div class="fgrid">
+        <div class="fg"><span class="fl">First Name</span><input id="inp-f" class="fi" type="text" placeholder="First..."/></div>
+        <div class="fg"><span class="fl">Last Name</span><input id="inp-l" class="fi" type="text" placeholder="Last..."/></div>
+        <div class="fg"><span class="fl">Number</span><input id="inp-n" class="fi ni" type="text" placeholder="#" maxlength="3"/></div>
+        <button class="addbtn" onclick="addPlayer()">+ Add</button>
+      </div>
+    </div>
+    <div class="zone-label">Unassigned <span class="mbadge">${t.main.length}</span></div>
+    <div class="zone">
+      <div class="mzone-hdr">
+        <span></span><span style="text-align:center">#</span><span>First</span><span>Last</span><span></span>
+      </div>
+      <div class="droplist" id="drop-main" data-zone="main"></div>
+    </div>
+    <div class="div"></div>
+    <div class="hint">Drag players between Unassigned, Black Team, and Gold Team</div>
+    <div class="sgrid">
+      <div class="steam">
+        <div class="shdr bk">Black Team <span class="badge">${t.black.length}</span></div>
+        <div class="zone-hdr bk-hdr"><span></span><span style="text-align:center">#</span><span>Player</span><span></span></div>
+        <div class="droplist" id="drop-black" data-zone="black"></div>
+      </div>
+      <div class="steam">
+        <div class="shdr gd">Gold Team <span class="badge">${t.gold.length}</span></div>
+        <div class="zone-hdr gd-hdr"><span></span><span style="text-align:center">#</span><span>Player</span><span></span></div>
+        <div class="droplist" id="drop-gold" data-zone="gold"></div>
+      </div>
+    </div>
+  `;
+
+  ['inp-f','inp-l','inp-n'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('keydown',e=>{ if(e.key==='Enter') addPlayer(); });
+  });
+
+  const ml=document.getElementById('drop-main');
+  if(!t.main.length){ ml.innerHTML='<div class="empty">No unassigned players</div>'; }
+  else { t.main.forEach(p=>{ const r=document.createElement('div'); r.className='prow main-style'; r.innerHTML=`<span class="grip">&#8942;&#8942;</span><span class="pnum">${p.num||'—'}</span><span class="pf">${p.first||'—'}</span><span class="pl">${p.last||'—'}</span><button class="del" onclick="event.stopPropagation();removePlayer('${p.id}')">&#10005;</button>`; r.addEventListener('pointerdown',e=>startDrag(e,p,'main')); ml.appendChild(r); }); }
+
+  const bl=document.getElementById('drop-black');
+  if(!t.black.length){ bl.innerHTML='<div class="empty">Drag players here</div>'; }
+  else { t.black.forEach(p=>{ const r=document.createElement('div'); r.className='prow bk-style'; r.innerHTML=`<span class="grip">&#8942;&#8942;</span><span class="pnum">${p.num||'—'}</span><span class="sname">${fullName(p)}</span><button class="del" onclick="event.stopPropagation();removePlayer('${p.id}')">&#10005;</button>`; r.addEventListener('pointerdown',e=>startDrag(e,p,'black')); bl.appendChild(r); }); }
+
+  const gl=document.getElementById('drop-gold');
+  if(!t.gold.length){ gl.innerHTML='<div class="empty">Drag players here</div>'; }
+  else { t.gold.forEach(p=>{ const r=document.createElement('div'); r.className='prow gd-style'; r.innerHTML=`<span class="grip">&#8942;&#8942;</span><span class="pnum">${p.num||'—'}</span><span class="sname">${fullName(p)}</span><button class="del" onclick="event.stopPropagation();removePlayer('${p.id}')">&#10005;</button>`; r.addEventListener('pointerdown',e=>startDrag(e,p,'gold')); gl.appendChild(r); }); }
+}
+
+render();
+</script>
+</body>
+</html>
